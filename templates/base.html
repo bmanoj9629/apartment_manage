@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ApartaSmart — Smart Apartment Management System"/>
+  <title>{% block title %}ApartaSmart{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Flash messages -->
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="flash-msg {{ category }}">
+      <i class="fa {% if category=='success' %}fa-check-circle text-success{% elif category=='danger' %}fa-times-circle text-danger{% elif category=='warning' %}fa-exclamation-triangle text-warning{% else %}fa-info-circle text-info{% endif %}"></i>
+      <span>{{ message }}</span>
+      <button class="flash-close" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;">&times;</button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<div class="app-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div class="brand-text">
+        <h5>ApartaSmart</h5>
+        <small>Management System</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% block sidebar_nav %}{% endblock %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">{{ current_user.name[0].upper() }}</div>
+        <div class="user-info">
+          <p>{{ current_user.name }}</p>
+          <small>{{ current_user.role }}</small>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost w-100" style="margin-top:10px;justify-content:center;">
+        <i class="fa fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button id="sidebarToggle" class="topbar-btn" style="display:none;">
+          <i class="fa fa-bars"></i>
+        </button>
+        <div>
+          <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="page-subtitle">{% block page_subtitle %}{% endblock %}</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a href="#" class="topbar-btn" title="Notifications">
+          <i class="fa fa-bell"></i>
+          <span class="dot"></span>
+        </a>
+        <a href="#" class="topbar-btn" title="Settings">
+          <i class="fa fa-cog"></i>
+        </a>
+        <div class="user-avatar" style="cursor:pointer;" title="{{ current_user.name }}">
+          {{ current_user.name[0].upper() }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

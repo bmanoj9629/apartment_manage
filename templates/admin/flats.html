@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Flats — ApartaSmart{% endblock %}
+{% block page_title %}Flat Management{% endblock %}
+{% block page_subtitle %}Manage flats and allocations{% endblock %}
+
+{% block sidebar_nav %}
+<p class="nav-section-title">Main</p>
+<div class="nav-item"><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.residents') }}" class="nav-link"><i class="fa fa-users"></i> Residents</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.flats') }}" class="nav-link active"><i class="fa fa-building"></i> Flats</a></div>
+<p class="nav-section-title">Operations</p>
+<div class="nav-item"><a href="{{ url_for('admin.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Management</p>
+<div class="nav-item"><a href="{{ url_for('admin.staff') }}" class="nav-link"><i class="fa fa-id-badge"></i> Staff</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex gap-8 mb-20" style="justify-content:flex-end;">
+  <button class="btn btn-primary" data-modal="addFlatModal"><i class="fa fa-plus"></i> Add Flat</button>
+  <button class="btn btn-success" data-modal="allocateModal"><i class="fa fa-key"></i> Allocate Flat</button>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa fa-building text-blue"></i> All Flats ({{ flats|length }})</div>
+    <div class="search-box"><i class="fa fa-search"></i><input type="text" id="tableSearch" class="form-control" placeholder="Search..." style="width:200px;padding-left:36px;"/></div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Flat No</th><th>Block</th><th>Floor</th><th>Type</th><th>Area</th><th>Rent</th><th>Resident</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for f in flats %}
+      <tr>
+        <td><strong>{{ f.flat_no }}</strong></td>
+        <td><span class="badge badge-primary">Block {{ f.block }}</span></td>
+        <td>{{ f.floor }}</td>
+        <td><span class="badge badge-info">{{ f.type }}</span></td>
+        <td>{{ f.area_sqft or '—' }} sq.ft</td>
+        <td>₹{{ "{:,.0f}".format(f.rent) }}</td>
+        <td>{{ f.resident_name or '<span class="text-muted">—</span>'|safe }}</td>
+        <td>
+          {% if f.status=='occupied' %}<span class="badge badge-success">Occupied</span>
+          {% elif f.status=='vacant' %}<span class="badge badge-primary">Vacant</span>
+          {% else %}<span class="badge badge-warning">Maintenance</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8"><div class="empty-state"><i class="fa fa-building"></i><p>No flats added yet.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Flat Modal -->
+<div class="modal-overlay" id="addFlatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-building"></i> Add New Flat</div>
+      <button class="modal-close">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_flat') }}">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Flat Number</label><input name="flat_no" class="form-control" required placeholder="e.g. A-101"/></div>
+          <div class="form-group"><label class="form-label">Block</label><input name="block" class="form-control" required placeholder="A / B / C"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Floor</label><input type="number" name="floor" class="form-control" required min="0" max="30"/></div>
+          <div class="form-group"><label class="form-label">Type</label>
+            <select name="type" class="form-control">
+              <option>Studio</option><option>1BHK</option><option selected>2BHK</option><option>3BHK</option><option>4BHK</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Area (sq.ft)</label><input type="number" name="area" class="form-control" placeholder="1200"/></div>
+          <div class="form-group"><label class="form-label">Monthly Rent (₹)</label><input type="number" name="rent" class="form-control" placeholder="25000"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Add Flat</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Allocate Flat Modal -->
+<div class="modal-overlay" id="allocateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-key"></i> Allocate Flat to Resident</div>
+      <button class="modal-close">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.allocate_flat') }}">
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Flat</label>
+          <select name="flat_id" class="form-control" required>
+            <option value="">Select flat…</option>
+            {% for f in flats %}<option value="{{ f.id }}">{{ f.flat_no }} ({{ f.type }}) — {{ f.status }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Resident</label>
+          <select name="resident_id" class="form-control" required>
+            <option value="">Select resident…</option>
+            {% for r in residents %}<option value="{{ r.id }}">{{ r.name }} ({{ r.email }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" name="start_date" class="form-control" required/></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fa fa-key"></i> Allocate</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

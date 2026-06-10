@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Maintenance — ApartaSmart{% endblock %}
+{% block page_title %}Maintenance Requests{% endblock %}
+{% block page_subtitle %}Assign and track maintenance jobs{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Main</p>
+<div class="nav-item"><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.residents') }}" class="nav-link"><i class="fa fa-users"></i> Residents</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.flats') }}" class="nav-link"><i class="fa fa-building"></i> Flats</a></div>
+<p class="nav-section-title">Operations</p>
+<div class="nav-item"><a href="{{ url_for('admin.maintenance') }}" class="nav-link active"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Management</p>
+<div class="nav-item"><a href="{{ url_for('admin.staff') }}" class="nav-link"><i class="fa fa-id-badge"></i> Staff</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa fa-tools text-warning"></i> All Maintenance Requests</div>
+    <div class="search-box"><i class="fa fa-search"></i><input id="tableSearch" class="form-control" placeholder="Search..." style="width:200px;padding-left:36px;"/></div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>#</th><th>Title</th><th>Resident</th><th>Flat</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Amount</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for r in requests %}
+      <tr>
+        <td style="color:var(--text-muted);">{{ r.id }}</td>
+        <td><strong>{{ r.title }}</strong><br/><small style="color:var(--text-muted);">{{ r.description[:50] if r.description else '' }}…</small></td>
+        <td>{{ r.resident_name }}</td>
+        <td><span class="badge badge-primary">{{ r.flat_no }}</span></td>
+        <td><span class="badge badge-info">{{ r.category }}</span></td>
+        <td><span class="priority-{{ r.priority }}">{{ r.priority|capitalize }}</span></td>
+        <td>
+          {% if r.status=='completed' %}<span class="badge badge-success">Completed</span>
+          {% elif r.status=='in_progress' %}<span class="badge badge-warning">In Progress</span>
+          {% elif r.status=='pending' %}<span class="badge badge-muted">Pending</span>
+          {% else %}<span class="badge badge-danger">{{ r.status }}</span>{% endif %}
+        </td>
+        <td>{{ r.staff_name or '—' }}</td>
+        <td>{% if r.amount %}₹{{ "{:,.0f}".format(r.amount) }}{% else %}—{% endif %}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" data-modal="assignModal{{ r.id }}"><i class="fa fa-edit"></i></button>
+        </td>
+      </tr>
+      <!-- Assign Modal -->
+      <div class="modal-overlay" id="assignModal{{ r.id }}">
+        <div class="modal">
+          <div class="modal-header"><div class="modal-title">Update Request #{{ r.id }}</div><button class="modal-close">&times;</button></div>
+          <form method="POST" action="{{ url_for('admin.assign_maintenance', rid=r.id) }}">
+            <div class="modal-body">
+              <div class="form-group"><label class="form-label">Assign to Staff</label>
+                <select name="staff_id" class="form-control">
+                  <option value="">Unassigned</option>
+                  {% for s in staff %}<option value="{{ s.id }}" {% if r.assigned_to==s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Status</label>
+                  <select name="status" class="form-control">
+                    {% for st in ['pending','in_progress','completed','cancelled'] %}
+                    <option {% if r.status==st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" name="amount" class="form-control" value="{{ r.amount or 0 }}"/></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+              <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <tr><td colspan="10"><div class="empty-state"><i class="fa fa-tools"></i><p>No maintenance requests yet.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Work History — Staff{% endblock %}
+{% block page_title %}Work History{% endblock %}
+{% block page_subtitle %}Your completed tasks and jobs{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Staff</p>
+<div class="nav-item"><a href="{{ url_for('staff.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.tasks') }}" class="nav-link"><i class="fa fa-tasks"></i> My Tasks</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.history') }}" class="nav-link active"><i class="fa fa-history"></i> Work History</a></div>
+{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-check-circle text-success"></i> Completed Tasks ({{ completed_tasks|length }})</div></div>
+    {% if completed_tasks %}
+    <div style="max-height:520px;overflow-y:auto;">
+      {% for t in completed_tasks %}
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div class="d-flex" style="justify-content:space-between;margin-bottom:4px;">
+          <strong>{{ t.title }}</strong>
+          <span class="badge badge-success">Done</span>
+        </div>
+        <div class="d-flex gap-8" style="margin-bottom:4px;">
+          <span class="badge badge-info">{{ t.category }}</span>
+          <span class="priority-{{ t.priority }}">{{ t.priority }}</span>
+          <span style="font-size:11px;color:var(--text-muted);">by {{ t.assigned_by_name }}</span>
+        </div>
+        {% if t.notes %}<p style="font-size:12px;color:var(--text-secondary);">📝 {{ t.notes }}</p>{% endif %}
+        <div style="font-size:11px;color:var(--text-muted);">Completed: {{ t.completed_at.strftime('%d %b %Y %H:%M') if t.completed_at else '—' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-tasks"></i><p>No completed tasks yet.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-tools text-green"></i> Completed Maintenance ({{ completed_maintenance|length }})</div></div>
+    {% if completed_maintenance %}
+    <div style="max-height:520px;overflow-y:auto;">
+      {% for r in completed_maintenance %}
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div class="d-flex" style="justify-content:space-between;margin-bottom:4px;">
+          <strong>{{ r.title }}</strong>
+          <span class="badge badge-success">Done</span>
+        </div>
+        <div class="d-flex gap-8" style="margin-bottom:4px;">
+          <span class="badge badge-info">{{ r.category }}</span>
+          <span class="badge badge-primary">{{ r.flat_no }}</span>
+          {% if r.amount %}<span style="color:var(--success);font-size:12px;font-weight:600;">₹{{ "{:,.0f}".format(r.amount) }}</span>{% endif %}
+        </div>
+        {% if r.notes %}<p style="font-size:12px;color:var(--text-secondary);">📝 {{ r.notes }}</p>{% endif %}
+        <div style="font-size:11px;color:var(--text-muted);">Completed: {{ r.completed_at.strftime('%d %b %Y %H:%M') if r.completed_at else '—' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-tools"></i><p>No completed maintenance yet.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

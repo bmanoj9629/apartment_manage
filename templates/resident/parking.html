@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Parking — ApartaSmart{% endblock %}
+{% block page_title %}My Parking{% endblock %}
+{% block page_subtitle %}Manage your parking slot{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">My Home</p>
+<div class="nav-item"><a href="{{ url_for('resident.dashboard') }}" class="nav-link"><i class="fa fa-home"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.bills') }}" class="nav-link"><i class="fa fa-file-invoice"></i> My Bills</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<p class="nav-section-title">Services</p>
+<div class="nav-item"><a href="{{ url_for('resident.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.parking') }}" class="nav-link active"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Account</p>
+<div class="nav-item"><a href="{{ url_for('resident.profile') }}" class="nav-link"><i class="fa fa-user-circle"></i> My Profile</a></div>
+{% endblock %}
+{% block content %}
+{% if my_slot %}
+<div class="card mb-24" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,182,212,0.08));border-color:rgba(16,185,129,0.3);">
+  <div class="card-body d-flex align-items-center gap-12">
+    <div style="font-size:48px;">🚗</div>
+    <div>
+      <div style="font-size:22px;font-weight:800;">Slot {{ my_slot.slot_no }}</div>
+      <div style="color:var(--text-secondary);">Block {{ my_slot.block }} · Level {{ my_slot.level }} · {{ my_slot.type|capitalize }}</div>
+      <div style="margin-top:6px;"><span class="badge badge-success">Assigned</span> <span style="color:var(--text-muted);font-size:13px;margin-left:8px;">Vehicle: <strong style="color:var(--text-primary);">{{ my_slot.vehicle_no or 'N/A' }}</strong></span></div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card mb-24">
+  <div class="card-header"><div class="card-title"><i class="fa fa-car text-blue"></i> Request Parking Slot</div></div>
+  <div class="card-body">
+    {% if available %}
+    <form method="POST" action="{{ url_for('resident.request_parking') }}">
+      <div class="form-group"><label class="form-label">Available Slot</label>
+        <select name="slot_id" class="form-control" required>
+          <option value="">Select a slot…</option>
+          {% for s in available %}<option value="{{ s.id }}">{{ s.slot_no }} — Block {{ s.block }}, Level {{ s.level }} ({{ s.type }})</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Your Vehicle Number</label><input name="vehicle_no" class="form-control" required placeholder="MH01AB1234"/></div>
+      <button type="submit" class="btn btn-success"><i class="fa fa-car"></i> Request Slot</button>
+    </form>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-parking"></i><p>No available parking slots at the moment. Contact admin.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fa fa-map text-info"></i> All Available Slots</div></div>
+  <div class="card-body">
+    <div class="parking-grid">
+      {% for s in available %}
+      <div class="parking-slot available">
+        <div style="font-size:22px;">{% if s.type=='car' %}🚗{% else %}🏍️{% endif %}</div>
+        <div class="slot-no">{{ s.slot_no }}</div>
+        <div style="font-size:11px;color:var(--text-muted);">Block {{ s.block }}, L{{ s.level }}</div>
+        <div class="slot-status" style="color:var(--success);">Available</div>
+      </div>
+      {% else %}
+      <p class="text-muted" style="padding:16px;">No available slots.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

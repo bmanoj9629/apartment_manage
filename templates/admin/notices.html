@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Notices — ApartaSmart{% endblock %}
+{% block page_title %}Notices & Announcements{% endblock %}
+{% block page_subtitle %}Post notices for residents and staff{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Main</p>
+<div class="nav-item"><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.residents') }}" class="nav-link"><i class="fa fa-users"></i> Residents</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.flats') }}" class="nav-link"><i class="fa fa-building"></i> Flats</a></div>
+<p class="nav-section-title">Operations</p>
+<div class="nav-item"><a href="{{ url_for('admin.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Management</p>
+<div class="nav-item"><a href="{{ url_for('admin.staff') }}" class="nav-link"><i class="fa fa-id-badge"></i> Staff</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.notices') }}" class="nav-link active"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-plus text-success"></i> Post New Notice</div></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.add_notice') }}">
+        <div class="form-group"><label class="form-label">Title</label><input name="title" class="form-control" required placeholder="Notice title…"/></div>
+        <div class="form-group"><label class="form-label">Content</label><textarea name="content" class="form-control" rows="4" required placeholder="Notice details…"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Category</label>
+            <select name="category" class="form-control">
+              {% for c in ['general','maintenance','event','emergency','billing','security'] %}<option>{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Target Audience</label>
+            <select name="target_role" class="form-control">
+              <option>all</option><option>resident</option><option>security</option><option>staff</option><option>accountant</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" name="is_pinned" id="is_pinned" style="width:16px;height:16px;accent-color:var(--accent);"/>
+          <label for="is_pinned" style="font-size:13px;cursor:pointer;">📌 Pin this notice</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="fa fa-bullhorn"></i> Publish Notice</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-list text-info"></i> All Notices ({{ notices|length }})</div></div>
+    <div style="max-height:520px;overflow-y:auto;padding:12px 16px;">
+      {% for n in notices %}
+      <div class="notice-card {% if n.is_pinned %}pinned{% endif %}">
+        <div class="d-flex" style="justify-content:space-between;align-items:flex-start;">
+          <div>
+            {% if n.is_pinned %}<span style="font-size:12px;">📌 </span>{% endif %}
+            <span class="notice-title">{{ n.title }}</span>
+          </div>
+          <a href="{{ url_for('admin.delete_notice', nid=n.id) }}" class="btn btn-ghost btn-sm" data-confirm="Delete this notice?"><i class="fa fa-trash text-danger"></i></a>
+        </div>
+        <div class="notice-meta">
+          <span class="badge badge-info" style="font-size:10px;">{{ n.category }}</span>
+          <span class="badge badge-muted" style="font-size:10px;">→ {{ n.target_role }}</span>
+          · By {{ n.author }} · {{ n.published_at.strftime('%d %b %Y') if n.published_at else '' }}
+        </div>
+        <div class="notice-body">{{ n.content[:120] }}{% if n.content|length > 120 %}…{% endif %}</div>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa fa-bullhorn"></i><p>No notices yet.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

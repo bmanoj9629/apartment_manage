@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Billing — ApartaSmart{% endblock %}
+{% block page_title %}Billing Management{% endblock %}
+{% block page_subtitle %}Generate and manage invoices{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Finance</p>
+<div class="nav-item"><a href="{{ url_for('accountant.dashboard') }}" class="nav-link"><i class="fa fa-chart-line"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('accountant.billing') }}" class="nav-link active"><i class="fa fa-file-invoice-dollar"></i> Billing</a></div>
+<div class="nav-item"><a href="{{ url_for('accountant.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="d-flex gap-8 mb-20" style="justify-content:space-between;flex-wrap:wrap;">
+  <div class="d-flex gap-8">
+    {% for s in ['all','unpaid','paid','overdue'] %}
+    <a href="{{ url_for('accountant.billing', status=s) }}" class="btn {% if status_filter==s %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">{{ s|capitalize }}</a>
+    {% endfor %}
+  </div>
+  <button class="btn btn-primary" data-modal="genInvoiceModal"><i class="fa fa-plus"></i> Generate Invoice</button>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa fa-file-invoice-dollar text-purple"></i> Invoices ({{ invoices|length }})</div>
+    <div class="search-box"><i class="fa fa-search"></i><input id="tableSearch" class="form-control" placeholder="Search..." style="width:200px;padding-left:36px;"/></div>
+  </div>
+  <div class="table-wrapper">
+    {% set mnames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+    <table>
+      <thead><tr><th>#</th><th>Resident</th><th>Flat</th><th>Period</th><th>Rent</th><th>Maint.</th><th>Elec.</th><th>Water</th><th>Total</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td style="color:var(--text-muted);">{{ inv.id }}</td>
+        <td><strong>{{ inv.resident_name }}</strong></td>
+        <td><span class="badge badge-primary">{{ inv.flat_no }}</span></td>
+        <td>{{ mnames[inv.month] }} {{ inv.year }}</td>
+        <td>₹{{ "{:,.0f}".format(inv.rent) }}</td>
+        <td>₹{{ "{:,.0f}".format(inv.maintenance) }}</td>
+        <td>₹{{ "{:,.0f}".format(inv.electricity) }}</td>
+        <td>₹{{ "{:,.0f}".format(inv.water) }}</td>
+        <td style="font-weight:700;">₹{{ "{:,.0f}".format(inv.total) }}</td>
+        <td style="font-size:12px;{% if inv.status=='overdue' %}color:var(--danger);font-weight:600;{% else %}color:var(--text-muted);{% endif %}">{{ inv.due_date.strftime('%d %b %Y') if inv.due_date else '—' }}</td>
+        <td>
+          {% if inv.status=='paid' %}<span class="badge badge-success">Paid</span>
+          {% elif inv.status=='overdue' %}<span class="badge badge-danger">Overdue</span>
+          {% elif inv.status=='unpaid' %}<span class="badge badge-warning">Unpaid</span>
+          {% else %}<span class="badge badge-muted">Waived</span>{% endif %}
+        </td>
+        <td>
+          <div class="d-flex gap-4">
+            {% if inv.status in ['unpaid','overdue'] %}
+            <a href="{{ url_for('accountant.mark_paid', iid=inv.id) }}" class="btn btn-success btn-sm" data-confirm="Mark as paid?" title="Mark Paid"><i class="fa fa-check"></i></a>
+            {% endif %}
+            {% if inv.status=='unpaid' %}
+            <a href="{{ url_for('accountant.mark_overdue', iid=inv.id) }}" class="btn btn-warning btn-sm" data-confirm="Mark as overdue?" title="Overdue"><i class="fa fa-exclamation"></i></a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="12"><div class="empty-state"><i class="fa fa-file-invoice"></i><p>No invoices found.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Generate Invoice Modal -->
+<div class="modal-overlay" id="genInvoiceModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header"><div class="modal-title"><i class="fa fa-file-invoice-dollar"></i> Generate Invoice</div><button class="modal-close">&times;</button></div>
+    <form method="POST" action="{{ url_for('accountant.generate_invoice') }}">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Resident</label>
+            <select name="resident_id" class="form-control" required>
+              <option value="">Select resident…</option>
+              {% for r in residents %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Flat</label>
+            <select name="flat_id" class="form-control" required>
+              <option value="">Select flat…</option>
+              {% for f in occupied_flats %}<option value="{{ f.id }}">{{ f.flat_no }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Month</label>
+            <select name="month" class="form-control" required>
+              {% set mnames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+              {% for i in range(1,13) %}<option value="{{ i }}">{{ mnames[i] }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Year</label><input type="number" name="year" class="form-control" value="2026" required/></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Rent (₹)</label><input type="number" name="rent" class="form-control" placeholder="0"/></div>
+          <div class="form-group"><label class="form-label">Maintenance (₹)</label><input type="number" name="maintenance" class="form-control" placeholder="0"/></div>
+          <div class="form-group"><label class="form-label">Electricity (₹)</label><input type="number" name="electricity" class="form-control" placeholder="0"/></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Water (₹)</label><input type="number" name="water" class="form-control" placeholder="0"/></div>
+          <div class="form-group"><label class="form-label">Parking (₹)</label><input type="number" name="parking" class="form-control" placeholder="0"/></div>
+          <div class="form-group"><label class="form-label">Other (₹)</label><input type="number" name="other" class="form-control" placeholder="0"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Due Date</label><input type="date" name="due_date" class="form-control" required/></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa fa-file-invoice-dollar"></i> Generate Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

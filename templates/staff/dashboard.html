@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Staff Dashboard — ApartaSmart{% endblock %}
+{% block page_title %}Staff Dashboard{% endblock %}
+{% block page_subtitle %}Your tasks and assignments{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Staff</p>
+<div class="nav-item"><a href="{{ url_for('staff.dashboard') }}" class="nav-link active"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.tasks') }}" class="nav-link"><i class="fa fa-tasks"></i> My Tasks</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.history') }}" class="nav-link"><i class="fa fa-history"></i> Work History</a></div>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card yellow"><div class="stat-icon"><i class="fa fa-clock"></i></div><div class="stat-value" data-target="{{ pending }}">0</div><div class="stat-label">Pending Tasks</div></div>
+  <div class="stat-card blue"><div class="stat-icon"><i class="fa fa-spinner"></i></div><div class="stat-value" data-target="{{ in_progress }}">0</div><div class="stat-label">In Progress</div></div>
+  <div class="stat-card green"><div class="stat-icon"><i class="fa fa-check-circle"></i></div><div class="stat-value" data-target="{{ completed }}">0</div><div class="stat-label">Completed</div></div>
+  <div class="stat-card red"><div class="stat-icon"><i class="fa fa-tools"></i></div><div class="stat-value" data-target="{{ active_maintenance }}">0</div><div class="stat-label">Active Maintenance</div></div>
+</div>
+
+<div class="grid-2 mb-24">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-tasks text-warning"></i> Active Tasks</div><a href="{{ url_for('staff.tasks') }}" class="btn btn-ghost btn-sm">All Tasks</a></div>
+    {% for t in tasks %}
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div class="d-flex" style="justify-content:space-between;margin-bottom:6px;">
+        <strong>{{ t.title }}</strong>
+        <span class="priority-{{ t.priority }}">{{ t.priority|capitalize }}</span>
+      </div>
+      <div class="d-flex gap-8" style="margin-bottom:8px;">
+        <span class="badge badge-info">{{ t.category }}</span>
+        {% if t.status=='pending' %}<span class="badge badge-muted">Pending</span>{% else %}<span class="badge badge-warning">In Progress</span>{% endif %}
+        {% if t.due_date %}<span style="font-size:11px;color:var(--text-muted);"><i class="fa fa-calendar"></i> {{ t.due_date.strftime('%d %b') }}</span>{% endif %}
+      </div>
+      <form method="POST" action="{{ url_for('staff.update_task', tid=t.id) }}" style="display:flex;gap:6px;">
+        <select name="status" class="form-control" style="padding:4px 8px;font-size:12px;width:auto;">
+          <option value="pending" {% if t.status=='pending' %}selected{% endif %}>Pending</option>
+          <option value="in_progress" {% if t.status=='in_progress' %}selected{% endif %}>In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i></button>
+      </form>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-party-horn"></i><p>All tasks completed! 🎉</p></div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-tools text-danger"></i> Maintenance Assigned</div><a href="{{ url_for('staff.maintenance') }}" class="btn btn-ghost btn-sm">All</a></div>
+    {% for r in maintenance %}
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div class="d-flex" style="justify-content:space-between;margin-bottom:4px;">
+        <strong>{{ r.title }}</strong>
+        {% if r.status=='in_progress' %}<span class="badge badge-warning">In Progress</span>{% elif r.status=='completed' %}<span class="badge badge-success">Done</span>{% else %}<span class="badge badge-muted">{{ r.status }}</span>{% endif %}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);">Flat {{ r.flat_no }} · {{ r.resident_name }} · <span class="priority-{{ r.priority }}">{{ r.priority }}</span></div>
+      {% if r.description %}<p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">{{ r.description[:60] }}…</p>{% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-tools"></i><p>No maintenance assigned.</p></div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Notices -->
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fa fa-bullhorn text-info"></i> Latest Notices</div></div>
+  <div class="card-body">
+    {% for n in notices %}
+    <div class="notice-card {% if n.is_pinned %}pinned{% endif %}">
+      {% if n.is_pinned %}<span style="font-size:11px;">📌 </span>{% endif %}
+      <span class="notice-title">{{ n.title }}</span>
+      <div class="notice-meta"><span class="badge badge-info" style="font-size:10px;">{{ n.category }}</span> · {{ n.published_at.strftime('%d %b %Y') if n.published_at else '' }}</div>
+      <div class="notice-body">{{ n.content[:100] }}…</div>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-bullhorn"></i><p>No notices.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

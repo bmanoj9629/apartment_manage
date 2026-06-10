@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Maintenance — Staff{% endblock %}
+{% block page_title %}My Maintenance Jobs{% endblock %}
+{% block page_subtitle %}Maintenance requests assigned to you{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Staff</p>
+<div class="nav-item"><a href="{{ url_for('staff.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.tasks') }}" class="nav-link"><i class="fa fa-tasks"></i> My Tasks</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.maintenance') }}" class="nav-link active"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('staff.history') }}" class="nav-link"><i class="fa fa-history"></i> Work History</a></div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fa fa-tools text-warning"></i> Assigned Maintenance ({{ requests|length }})</div></div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Title</th><th>Category</th><th>Flat</th><th>Resident</th><th>Priority</th><th>Status</th><th>Amount</th><th>Update</th></tr></thead>
+      <tbody>
+      {% for r in requests %}
+      <tr>
+        <td>
+          <strong>{{ r.title }}</strong>
+          {% if r.description %}<br/><small class="text-muted">{{ r.description[:60] }}</small>{% endif %}
+          {% if r.notes %}<br/><small style="color:var(--info);"><i class="fa fa-comment"></i> {{ r.notes }}</small>{% endif %}
+        </td>
+        <td><span class="badge badge-info">{{ r.category }}</span></td>
+        <td><span class="badge badge-primary">{{ r.flat_no }}</span></td>
+        <td>{{ r.resident_name }}</td>
+        <td><span class="priority-{{ r.priority }}">{{ r.priority|capitalize }}</span></td>
+        <td>
+          {% if r.status=='completed' %}<span class="badge badge-success">Completed</span>
+          {% elif r.status=='in_progress' %}<span class="badge badge-warning">In Progress</span>
+          {% else %}<span class="badge badge-muted">Pending</span>{% endif %}
+        </td>
+        <td>{% if r.amount %}₹{{ "{:,.0f}".format(r.amount) }}{% else %}—{% endif %}</td>
+        <td><button class="btn btn-ghost btn-sm" data-modal="updateMaint{{ r.id }}"><i class="fa fa-edit"></i></button></td>
+      </tr>
+      <div class="modal-overlay" id="updateMaint{{ r.id }}">
+        <div class="modal">
+          <div class="modal-header"><div class="modal-title">Update Job #{{ r.id }}: {{ r.title }}</div><button class="modal-close">&times;</button></div>
+          <form method="POST" action="{{ url_for('staff.update_maintenance', rid=r.id) }}">
+            <div class="modal-body">
+              <div class="form-group"><label class="form-label">Status</label>
+                <select name="status" class="form-control">
+                  <option value="in_progress" {% if r.status=='in_progress' %}selected{% endif %}>In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Notes / Work Done</label>
+                <textarea name="notes" class="form-control" rows="3" placeholder="Describe what was done…">{{ r.notes or '' }}</textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+              <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <tr><td colspan="8"><div class="empty-state"><i class="fa fa-tools"></i><p>No maintenance assigned to you.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

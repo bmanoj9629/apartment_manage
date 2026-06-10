@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Parking — Security{% endblock %}
+{% block page_title %}Parking Overview{% endblock %}
+{% block page_subtitle %}Current parking status{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Security</p>
+<div class="nav-item"><a href="{{ url_for('security.dashboard') }}" class="nav-link"><i class="fa fa-shield-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('security.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('security.log_visitor') }}" class="nav-link"><i class="fa fa-plus-circle"></i> Log Walk-in</a></div>
+<div class="nav-item"><a href="{{ url_for('security.parking') }}" class="nav-link active"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('security.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fa fa-car text-blue"></i> Parking Slots Overview</div></div>
+  <div class="card-body">
+    <div class="parking-grid">
+      {% for s in slots %}
+      <div class="parking-slot {{ s.status }}">
+        <div style="font-size:22px;">{% if s.type=='car' %}🚗{% elif s.type=='bike' %}🏍️{% else %}🚗{% endif %}</div>
+        <div class="slot-no">{{ s.slot_no }}</div>
+        <div style="font-size:11px;color:var(--text-muted);">Block {{ s.block }}, L{{ s.level }}</div>
+        <div class="slot-status" style="color:{% if s.status=='available' %}var(--success){% elif s.status=='occupied' %}var(--danger){% elif s.status=='reserved' %}var(--warning){% else %}var(--text-muted){% endif %};">
+          {{ s.status }}
+        </div>
+        {% if s.resident_name %}<div style="font-size:10px;margin-top:4px;color:var(--text-muted);">{{ s.resident_name }}</div>{% endif %}
+        {% if s.vehicle_no %}<div style="font-size:10px;color:var(--accent-light);font-weight:600;">{{ s.vehicle_no }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

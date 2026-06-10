@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Complaints — ApartaSmart{% endblock %}
+{% block page_title %}Complaints{% endblock %}
+{% block page_subtitle %}Review and respond to complaints{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Main</p>
+<div class="nav-item"><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.residents') }}" class="nav-link"><i class="fa fa-users"></i> Residents</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.flats') }}" class="nav-link"><i class="fa fa-building"></i> Flats</a></div>
+<p class="nav-section-title">Operations</p>
+<div class="nav-item"><a href="{{ url_for('admin.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.complaints') }}" class="nav-link active"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Management</p>
+<div class="nav-item"><a href="{{ url_for('admin.staff') }}" class="nav-link"><i class="fa fa-id-badge"></i> Staff</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa fa-comment-alt text-info"></i> All Complaints ({{ complaints|length }})</div>
+    <div class="search-box"><i class="fa fa-search"></i><input id="tableSearch" class="form-control" placeholder="Search..." style="width:200px;padding-left:36px;"/></div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>#</th><th>Title</th><th>Resident</th><th>Category</th><th>Priority</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for c in complaints %}
+      <tr>
+        <td style="color:var(--text-muted);">{{ c.id }}</td>
+        <td>
+          <strong>{{ c.title }}</strong>
+          {% if c.response %}<br/><small style="color:var(--text-muted);">Response: {{ c.response[:40] }}…</small>{% endif %}
+        </td>
+        <td>{{ c.resident_name }}</td>
+        <td><span class="badge badge-info">{{ c.category }}</span></td>
+        <td><span class="priority-{{ c.priority }}">{{ c.priority|capitalize }}</span></td>
+        <td>
+          {% if c.status=='resolved' %}<span class="badge badge-success">Resolved</span>
+          {% elif c.status=='under_review' %}<span class="badge badge-warning">Under Review</span>
+          {% elif c.status=='open' %}<span class="badge badge-danger">Open</span>
+          {% else %}<span class="badge badge-muted">Closed</span>{% endif %}
+        </td>
+        <td style="color:var(--text-muted);font-size:12px;">{{ c.submitted_at.strftime('%d %b %Y') if c.submitted_at else '—' }}</td>
+        <td><button class="btn btn-ghost btn-sm" data-modal="respondModal{{ c.id }}"><i class="fa fa-reply"></i> Respond</button></td>
+      </tr>
+      <div class="modal-overlay" id="respondModal{{ c.id }}">
+        <div class="modal">
+          <div class="modal-header"><div class="modal-title">Respond to Complaint #{{ c.id }}</div><button class="modal-close">&times;</button></div>
+          <form method="POST" action="{{ url_for('admin.respond_complaint', cid=c.id) }}">
+            <div class="modal-body">
+              <p style="font-size:14px;margin-bottom:12px;color:var(--text-secondary);"><strong>{{ c.title }}</strong> — {{ c.description }}</p>
+              <div class="form-group"><label class="form-label">Response</label><textarea name="response" class="form-control" rows="3" required>{{ c.response or '' }}</textarea></div>
+              <div class="form-group"><label class="form-label">Update Status</label>
+                <select name="status" class="form-control">
+                  {% for s in ['open','under_review','resolved','closed'] %}
+                  <option {% if c.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+              <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane"></i> Submit Response</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <tr><td colspan="8"><div class="empty-state"><i class="fa fa-comment-alt"></i><p>No complaints filed.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

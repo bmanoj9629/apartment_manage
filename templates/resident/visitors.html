@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Visitors — ApartaSmart{% endblock %}
+{% block page_title %}My Visitors{% endblock %}
+{% block page_subtitle %}Register and track visitors{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">My Home</p>
+<div class="nav-item"><a href="{{ url_for('resident.dashboard') }}" class="nav-link"><i class="fa fa-home"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.bills') }}" class="nav-link"><i class="fa fa-file-invoice"></i> My Bills</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<p class="nav-section-title">Services</p>
+<div class="nav-item"><a href="{{ url_for('resident.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.visitors') }}" class="nav-link active"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Account</p>
+<div class="nav-item"><a href="{{ url_for('resident.profile') }}" class="nav-link"><i class="fa fa-user-circle"></i> My Profile</a></div>
+{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-user-plus text-success"></i> Register Visitor</div></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('resident.add_visitor') }}">
+        <div class="form-group"><label class="form-label">Visitor Name</label><input name="visitor_name" class="form-control" required placeholder="Full name"/></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input name="phone" class="form-control" placeholder="+91 99999 99999"/></div>
+        <div class="form-group"><label class="form-label">Purpose of Visit</label><input name="purpose" class="form-control" placeholder="e.g. Family visit, delivery…"/></div>
+        <div class="form-group"><label class="form-label">Vehicle Number (optional)</label><input name="vehicle_no" class="form-control" placeholder="MH01AB1234"/></div>
+        <button type="submit" class="btn btn-success w-100"><i class="fa fa-paper-plane"></i> Register Visitor</button>
+      </form>
+      <div style="margin-top:14px;padding:12px;background:rgba(6,182,212,0.08);border-radius:8px;border-left:3px solid var(--info);">
+        <p style="font-size:12px;color:var(--text-secondary);"><i class="fa fa-info-circle text-info"></i> Your visitor will be verified by security at the gate. They'll be marked as pending until security approves them.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-history text-info"></i> Visitor History</div></div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Name</th><th>Purpose</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for v in visitors %}
+        <tr>
+          <td><strong>{{ v.visitor_name }}</strong><br/><small style="color:var(--text-muted);">{{ v.phone }}</small></td>
+          <td>{{ v.purpose or '—' }}</td>
+          <td style="font-size:12px;">{{ v.check_in.strftime('%d %b %H:%M') if v.check_in else '—' }}</td>
+          <td style="font-size:12px;">{{ v.check_out.strftime('%d %b %H:%M') if v.check_out else '—' }}</td>
+          <td>
+            {% if v.status=='checked_in' %}<span class="badge badge-success">In</span>
+            {% elif v.status=='checked_out' %}<span class="badge badge-muted">Out</span>
+            {% elif v.status=='pending' %}<span class="badge badge-warning">Pending</span>
+            {% elif v.status=='denied' %}<span class="badge badge-danger">Denied</span>
+            {% else %}<span class="badge badge-info">{{ v.status }}</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5"><div class="empty-state"><i class="fa fa-user-check"></i><p>No visitors registered yet.</p></div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

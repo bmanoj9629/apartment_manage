@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Accountant Dashboard — ApartaSmart{% endblock %}
+{% block page_title %}Finance Dashboard{% endblock %}
+{% block page_subtitle %}Revenue overview and billing{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Finance</p>
+<div class="nav-item"><a href="{{ url_for('accountant.dashboard') }}" class="nav-link active"><i class="fa fa-chart-line"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('accountant.billing') }}" class="nav-link"><i class="fa fa-file-invoice-dollar"></i> Billing</a></div>
+<div class="nav-item"><a href="{{ url_for('accountant.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card green"><div class="stat-icon"><i class="fa fa-rupee-sign"></i></div><div class="stat-value" data-target="{{ monthly_collected }}" data-float="true">0</div><div class="stat-label">Collected This Month</div></div>
+  <div class="stat-card yellow"><div class="stat-icon"><i class="fa fa-file-invoice"></i></div><div class="stat-value" data-target="{{ unpaid_count }}">0</div><div class="stat-label">Pending Invoices</div></div>
+  <div class="stat-card red"><div class="stat-icon"><i class="fa fa-exclamation-circle"></i></div><div class="stat-value" data-target="{{ overdue }}" data-float="true">0</div><div class="stat-label">Overdue Amount</div></div>
+  <div class="stat-card purple"><div class="stat-icon"><i class="fa fa-wallet"></i></div><div class="stat-value" data-target="{{ unpaid }}" data-float="true">0</div><div class="stat-label">Total Unpaid</div></div>
+</div>
+
+<div class="grid-2 mb-24">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-chart-line text-success"></i> Monthly Revenue ({{ 'now'|default('2026') }})</div></div>
+    <div class="card-body"><div class="chart-container"><canvas id="revChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-exclamation-circle text-danger"></i> Overdue / Pending Invoices</div><a href="{{ url_for('accountant.billing') }}" class="btn btn-ghost btn-sm">Manage</a></div>
+    <div style="max-height:280px;overflow-y:auto;">
+      {% for inv in pending_invoices %}
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <strong>{{ inv.resident_name }}</strong>
+          <div style="font-size:12px;color:var(--text-muted);">Flat {{ inv.flat_no }} · {% set mnames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}{{ mnames[inv.month] }} {{ inv.year }}</div>
+          <div style="font-size:11px;color:{% if inv.status=='overdue' %}var(--danger){% else %}var(--warning){% endif %};">Due: {{ inv.due_date.strftime('%d %b') if inv.due_date else '—' }}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:800;">₹{{ "{:,.0f}".format(inv.total) }}</div>
+          <a href="{{ url_for('accountant.mark_paid', iid=inv.id) }}" class="btn btn-success btn-sm" data-confirm="Mark as paid?"><i class="fa fa-check"></i> Paid</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:24px;"><i class="fa fa-check-circle text-success"></i><p>No pending invoices!</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const mnames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const md = {{ monthly_data | tojson }};
+buildRevenueChart('revChart',
+  md.map(r => mnames[r.month-1]),
+  [
+    { label: 'Billed (₹)', data: md.map(r => parseFloat(r.total)), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)' },
+    { label: 'Collected (₹)', data: md.map(r => parseFloat(r.collected)), borderColor: '#10b981', backgroundColor: 'transparent' }
+  ]
+);
+</script>
+{% endblock %}

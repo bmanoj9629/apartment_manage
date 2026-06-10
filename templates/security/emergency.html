@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Emergency — Security{% endblock %}
+{% block page_title %}Emergency Alerts{% endblock %}
+{% block page_subtitle %}Report and monitor emergencies{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Security</p>
+<div class="nav-item"><a href="{{ url_for('security.dashboard') }}" class="nav-link"><i class="fa fa-shield-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('security.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('security.log_visitor') }}" class="nav-link"><i class="fa fa-plus-circle"></i> Log Walk-in</a></div>
+<div class="nav-item"><a href="{{ url_for('security.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('security.emergency') }}" class="nav-link active"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-broadcast-tower text-danger"></i> Report Emergency</div></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('security.report_emergency') }}">
+        <div class="form-group"><label class="form-label">Emergency Type</label>
+          <select name="type" class="form-control" required>
+            {% for t in ['fire','flood','medical','security','evacuation','power','other'] %}<option>{{ t }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Severity</label>
+          <select name="severity" class="form-control" required>
+            <option>low</option><option>medium</option><option selected>high</option><option>critical</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Title</label><input name="title" class="form-control" required placeholder="Brief emergency title"/></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3" placeholder="What happened?"></textarea></div>
+        <button type="submit" class="btn btn-danger w-100"><i class="fa fa-exclamation-triangle"></i> Report Emergency</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-list-alt text-warning"></i> All Alerts ({{ alerts|length }})</div></div>
+    <div style="max-height:480px;overflow-y:auto;">
+      {% for a in alerts %}
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+        <div class="d-flex" style="justify-content:space-between;margin-bottom:6px;">
+          <strong>{{ a.title }}</strong>
+          {% if a.status=='active' %}<span class="badge badge-danger">Active</span>{% elif a.status=='resolved' %}<span class="badge badge-success">Resolved</span>{% else %}<span class="badge badge-warning">False Alarm</span>{% endif %}
+        </div>
+        <div class="d-flex gap-8"><span class="badge badge-info">{{ a.type }}</span><span class="badge {% if a.severity in ['critical','high'] %}badge-danger{% else %}badge-warning{% endif %}">{{ a.severity }}</span></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">By {{ a.created_by_name }} · {{ a.created_at.strftime('%d %b %H:%M') if a.created_at else '' }}</div>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fa fa-shield-alt"></i><p>No alerts.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

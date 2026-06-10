@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Resident Dashboard — ApartaSmart{% endblock %}
+{% block page_title %}My Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ current_user.name }}{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">My Home</p>
+<div class="nav-item"><a href="{{ url_for('resident.dashboard') }}" class="nav-link active"><i class="fa fa-home"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.bills') }}" class="nav-link"><i class="fa fa-file-invoice"></i> My Bills</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<p class="nav-section-title">Services</p>
+<div class="nav-item"><a href="{{ url_for('resident.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Account</p>
+<div class="nav-item"><a href="{{ url_for('resident.profile') }}" class="nav-link"><i class="fa fa-user-circle"></i> My Profile</a></div>
+{% endblock %}
+{% block content %}
+{% for alert in alerts %}
+<div class="emergency-banner">
+  <i class="fa fa-exclamation-triangle text-danger" style="font-size:20px;"></i>
+  <div><strong class="text-danger">{{ alert.type|upper }}:</strong> {{ alert.title }} <span style="font-size:12px;color:var(--text-muted);">({{ alert.severity }})</span></div>
+</div>
+{% endfor %}
+
+<!-- Flat Info -->
+{% if flat %}
+<div class="card mb-24" style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.08));border-color:rgba(59,130,246,0.3);">
+  <div class="card-body" style="display:flex;align-items:center;gap:20px;">
+    <div style="font-size:48px;">🏠</div>
+    <div>
+      <div style="font-size:22px;font-weight:800;">Flat {{ flat.flat_no }}</div>
+      <div style="color:var(--text-secondary);">Block {{ flat.block }} · Floor {{ flat.floor }} · {{ flat.type }} · {{ flat.area_sqft }} sq.ft</div>
+      <div style="margin-top:6px;"><span class="badge badge-success">Occupied</span> <span style="color:var(--text-muted);font-size:13px;margin-left:8px;">Monthly Rent: <strong style="color:var(--text-primary);">₹{{ "{:,.0f}".format(flat.rent) }}</strong></span></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="stats-grid">
+  <div class="stat-card yellow"><div class="stat-icon"><i class="fa fa-tools"></i></div><div class="stat-value" data-target="{{ pending_maintenance }}">0</div><div class="stat-label">Pending Requests</div></div>
+  <div class="stat-card red"><div class="stat-icon"><i class="fa fa-comment-alt"></i></div><div class="stat-value" data-target="{{ open_complaints }}">0</div><div class="stat-label">Open Complaints</div></div>
+  <div class="stat-card cyan"><div class="stat-icon"><i class="fa fa-user-check"></i></div><div class="stat-value" data-target="{{ active_visitors }}">0</div><div class="stat-label">Active Visitors</div></div>
+  <div class="stat-card purple"><div class="stat-icon"><i class="fa fa-file-invoice"></i></div><div class="stat-value" data-target="{{ pending_bills|length }}">0</div><div class="stat-label">Pending Bills</div></div>
+</div>
+
+<div class="grid-2 mb-24">
+  <!-- Pending Bills -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-file-invoice text-warning"></i> Pending Bills</div><a href="{{ url_for('resident.bills') }}" class="btn btn-ghost btn-sm">View All</a></div>
+    {% if pending_bills %}
+    {% set mnames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+    {% for bill in pending_bills %}
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <strong>{{ mnames[bill.month] }} {{ bill.year }}</strong>
+        <div style="font-size:12px;color:var(--text-muted);">Due: {{ bill.due_date.strftime('%d %b %Y') if bill.due_date else '—' }}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:18px;font-weight:800;">₹{{ "{:,.0f}".format(bill.total) }}</div>
+        {% if bill.status=='overdue' %}<span class="badge badge-danger">Overdue</span>{% else %}<span class="badge badge-warning">Unpaid</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><i class="fa fa-check-circle text-success"></i><p>No pending bills! You're all clear.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Notices -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fa fa-bullhorn text-info"></i> Notices</div><a href="{{ url_for('resident.notices') }}" class="btn btn-ghost btn-sm">All</a></div>
+    <div class="card-body" style="padding-top:8px;">
+      {% for n in notices %}
+      <div class="notice-card {% if n.is_pinned %}pinned{% endif %}">
+        {% if n.is_pinned %}<span style="font-size:11px;">📌 </span>{% endif %}
+        <div class="notice-title">{{ n.title }}</div>
+        <div class="notice-meta"><span class="badge badge-info" style="font-size:10px;">{{ n.category }}</span> · {{ n.published_at.strftime('%d %b') if n.published_at else '' }}</div>
+        <div class="notice-body">{{ n.content[:80] }}…</div>
+      </div>
+      {% else %}<div class="empty-state" style="padding:24px;"><i class="fa fa-bullhorn"></i><p>No notices.</p></div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent Maintenance -->
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fa fa-tools text-warning"></i> My Recent Requests</div><a href="{{ url_for('resident.maintenance') }}" class="btn btn-ghost btn-sm">View All</a></div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+      {% for r in recent_requests %}
+      <tr>
+        <td><strong>{{ r.title }}</strong></td>
+        <td><span class="badge badge-info">{{ r.category }}</span></td>
+        <td><span class="priority-{{ r.priority }}">{{ r.priority|capitalize }}</span></td>
+        <td>{% if r.status=='completed' %}<span class="badge badge-success">Completed</span>{% elif r.status=='in_progress' %}<span class="badge badge-warning">In Progress</span>{% else %}<span class="badge badge-muted">Pending</span>{% endif %}</td>
+        <td style="font-size:12px;color:var(--text-muted);">{{ r.requested_at.strftime('%d %b') if r.requested_at else '—' }}</td>
+      </tr>
+      {% else %}<tr><td colspan="5"><div class="empty-state" style="padding:20px;"><i class="fa fa-tools"></i><p>No requests yet.</p></div></td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

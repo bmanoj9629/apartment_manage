@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}My Bills — ApartaSmart{% endblock %}
+{% block page_title %}My Bills{% endblock %}
+{% block page_subtitle %}View your invoices and payment history{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">My Home</p>
+<div class="nav-item"><a href="{{ url_for('resident.dashboard') }}" class="nav-link"><i class="fa fa-home"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.bills') }}" class="nav-link active"><i class="fa fa-file-invoice"></i> My Bills</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<p class="nav-section-title">Services</p>
+<div class="nav-item"><a href="{{ url_for('resident.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('resident.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Account</p>
+<div class="nav-item"><a href="{{ url_for('resident.profile') }}" class="nav-link"><i class="fa fa-user-circle"></i> My Profile</a></div>
+{% endblock %}
+{% block content %}
+{% set mnames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+  {% for inv in invoices %}
+  <div class="card" style="{% if inv.status=='overdue' %}border-color:rgba(239,68,68,0.4);{% elif inv.status=='paid' %}border-color:rgba(16,185,129,0.3);{% endif %}">
+    <div class="card-header">
+      <div class="card-title">{{ mnames[inv.month] }} {{ inv.year }} — {{ inv.flat_no }}</div>
+      {% if inv.status=='paid' %}<span class="badge badge-success">✓ Paid</span>
+      {% elif inv.status=='overdue' %}<span class="badge badge-danger">Overdue</span>
+      {% else %}<span class="badge badge-warning">Unpaid</span>{% endif %}
+    </div>
+    <div class="card-body">
+      <table style="width:100%;font-size:13px;">
+        <tr><td style="color:var(--text-muted);">Rent</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.rent) }}</td></tr>
+        <tr><td style="color:var(--text-muted);">Maintenance</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.maintenance) }}</td></tr>
+        <tr><td style="color:var(--text-muted);">Electricity</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.electricity) }}</td></tr>
+        <tr><td style="color:var(--text-muted);">Water</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.water) }}</td></tr>
+        {% if inv.parking > 0 %}<tr><td style="color:var(--text-muted);">Parking</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.parking) }}</td></tr>{% endif %}
+        {% if inv.other > 0 %}<tr><td style="color:var(--text-muted);">Other</td><td style="text-align:right;">₹{{ "{:,.0f}".format(inv.other) }}</td></tr>{% endif %}
+        <tr style="border-top:1px solid var(--border);"><td style="font-weight:700;padding-top:8px;">Total</td><td style="text-align:right;font-weight:800;font-size:16px;padding-top:8px;color:{% if inv.status=='paid' %}var(--success){% elif inv.status=='overdue' %}var(--danger){% else %}var(--warning){% endif %};">₹{{ "{:,.0f}".format(inv.total) }}</td></tr>
+      </table>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+        {% if inv.due_date %}Due: {{ inv.due_date.strftime('%d %b %Y') }}{% endif %}
+        {% if inv.paid_at %} · Paid: {{ inv.paid_at.strftime('%d %b %Y') }}{% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body"><div class="empty-state"><i class="fa fa-file-invoice"></i><p>No invoices generated yet.</p></div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

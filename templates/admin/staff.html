@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Staff — ApartaSmart{% endblock %}
+{% block page_title %}Staff Management{% endblock %}
+{% block page_subtitle %}Manage staff and assign tasks{% endblock %}
+{% block sidebar_nav %}
+<p class="nav-section-title">Main</p>
+<div class="nav-item"><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.residents') }}" class="nav-link"><i class="fa fa-users"></i> Residents</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.flats') }}" class="nav-link"><i class="fa fa-building"></i> Flats</a></div>
+<p class="nav-section-title">Operations</p>
+<div class="nav-item"><a href="{{ url_for('admin.maintenance') }}" class="nav-link"><i class="fa fa-tools"></i> Maintenance</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.complaints') }}" class="nav-link"><i class="fa fa-comment-alt"></i> Complaints</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.visitors') }}" class="nav-link"><i class="fa fa-user-check"></i> Visitors</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.parking') }}" class="nav-link"><i class="fa fa-car"></i> Parking</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.amenities') }}" class="nav-link"><i class="fa fa-swimming-pool"></i> Amenities</a></div>
+<p class="nav-section-title">Management</p>
+<div class="nav-item"><a href="{{ url_for('admin.staff') }}" class="nav-link active"><i class="fa fa-id-badge"></i> Staff</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.notices') }}" class="nav-link"><i class="fa fa-bullhorn"></i> Notices</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.emergency') }}" class="nav-link"><i class="fa fa-exclamation-triangle"></i> Emergency</a></div>
+<div class="nav-item"><a href="{{ url_for('admin.reports') }}" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a></div>
+{% endblock %}
+{% block content %}
+<div class="d-flex gap-8 mb-20" style="justify-content:flex-end;">
+  <button class="btn btn-primary" data-modal="addStaffModal"><i class="fa fa-user-plus"></i> Add Staff</button>
+  <button class="btn btn-success" data-modal="assignTaskModal"><i class="fa fa-tasks"></i> Assign Task</button>
+</div>
+<div class="card mb-24">
+  <div class="card-header"><div class="card-title"><i class="fa fa-id-badge text-purple"></i> All Staff Members</div></div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Tasks Assigned</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for s in staff_members %}
+      <tr>
+        <td>
+          <div class="d-flex align-items-center gap-8">
+            <div class="user-avatar" style="width:32px;height:32px;font-size:12px;">{{ s.name[0].upper() }}</div>
+            <strong>{{ s.name }}</strong>
+          </div>
+        </td>
+        <td>{{ s.email }}</td>
+        <td>
+          {% set rclr = {'security':'warning','staff':'purple','accountant':'info'} %}
+          <span class="badge badge-{{ rclr.get(s.role,'muted') }}">{{ s.role|capitalize }}</span>
+        </td>
+        <td>{{ s.phone or '—' }}</td>
+        <td><span class="badge badge-primary">{{ s.task_count }}</span></td>
+        <td>{% if s.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6"><div class="empty-state"><i class="fa fa-id-badge"></i><p>No staff members found.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="fa fa-user-plus"></i> Add Staff Member</div><button class="modal-close">&times;</button></div>
+    <form method="POST" action="{{ url_for('admin.add_staff') }}">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Full Name</label><input name="name" class="form-control" required/></div>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Role</label>
+            <select name="role" class="form-control" required>
+              <option>staff</option><option>security</option><option>accountant</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Phone</label><input name="phone" class="form-control"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required/></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Assign Task Modal -->
+<div class="modal-overlay" id="assignTaskModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="fa fa-tasks"></i> Assign Task</div><button class="modal-close">&times;</button></div>
+    <form method="POST" action="{{ url_for('admin.assign_task') }}">
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Staff Member</label>
+          <select name="staff_id" class="form-control" required>
+            <option value="">Select staff…</option>
+            {% for s in staff_members if s.role=='staff' %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Task Title</label><input name="title" class="form-control" required placeholder="e.g. Clean Block A lobby"/></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Category</label>
+            <select name="category" class="form-control">
+              <option>cleaning</option><option>repair</option><option>security</option><option>delivery</option><option>general</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Priority</label>
+            <select name="priority" class="form-control">
+              <option>low</option><option selected>medium</option><option>high</option><option>urgent</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Due Date</label><input type="date" name="due_date" class="form-control" required/></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fa fa-paper-plane"></i> Assign Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
