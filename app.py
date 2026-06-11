@@ -17,7 +17,8 @@ def create_app():
     login_manager.login_message_category = 'warning'
 
     # Ensure upload folder exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+os.makedirs(upload_folder, exist_ok=True)
 
     # User loader
     from models import User
